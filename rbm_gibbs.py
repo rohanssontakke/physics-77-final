@@ -31,7 +31,7 @@ Algorithm
 import numpy as np
 from typing import Tuple
 
-ef train_2d(L, J, h, alpha=2, n_steps=300, n_samples=300,
+def train_2d(L, J, h, alpha=2, n_steps=300, n_samples=300,
              eta=0.02, seed=16):
     """
     Train one RBM on the 2D L×L TFI model.
