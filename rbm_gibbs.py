@@ -31,7 +31,48 @@ Algorithm
 import numpy as np
 from typing import Tuple
 
+ef train_2d(L, J, h, alpha=2, n_steps=300, n_samples=300,
+             eta=0.02, seed=16):
+    """
+    Train one RBM on the 2D L×L TFI model.
 
+    Returns
+    -------
+    energy_history   : list of E/N estimates per step
+    variance_history : list of var(E_loc) per step
+    e_exact          : exact E/N (None if L > 4, since 2^(L²) blows up fast)
+    rbm              : trained RBM
+    L                : lattice side length (passed through for convenience)
+    """
+    N = L * L
+
+    e_exact = None
+    if N <= 16:
+        print(f"    Computing exact ground state (N={N}, dim={2**N:,})...",
+              end=' ', flush=True)
+        e_exact = ed_exact_energy(L, h, J) / N
+        print(f"E/N = {e_exact:.6f}")
+
+    rbm     = RBM(N=N, alpha=alpha, seed=seed)
+    vmc     = VMC(rbm, L, h=h, J=J, n_samples=n_samples, eta=eta)
+
+    energy_history   = []
+    variance_history = []
+
+    for step in range(n_steps):
+        with torch.no_grad():
+            configs = vmc.sampler.sample(n_samples, n_burn=5)
+            e_locs  = rbm.local_energy_batch(configs, h, J, L)
+            e_mean  = (e_locs.mean() / N).item()
+            e_var   = e_locs.var().item()
+
+        eps = vmc._eps(step, n_steps - 1)
+        vmc.step(eps)
+
+        energy_history.append(e_mean)
+        variance_history.append(e_var)
+
+    return energy_history, variance_history, e_exact, rbm
 # ---------------------------------------------------------------------------
 # RBM wave function
 # ---------------------------------------------------------------------------
