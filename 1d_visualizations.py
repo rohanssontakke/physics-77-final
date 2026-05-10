@@ -1,10 +1,8 @@
 def plot_convergence_vs_h(L=6, J=1.0, h_values=None, hidden_dim=32, lr=0.01, n_iter=500):
-    """
-    Train a fresh model at each h/J value and overlay energy convergence.
-    The critical point h=J=1 should converge slowest and to the worst error.
-    """
+
+    #Train a new model for every h/J ratio, overlay energy convergence.
     if h_values is None:
-        h_values = [0.0, 0.3, 0.5, 1.0, 1.5, 2.5]
+        h_values = [0.0, 0.3, 0.5, 1.0, 1.5, 2.5] #list of of h-values, with 1.0 corresponding to critical point.
 
     colors = plt.cm.plasma(np.linspace(0.1, 0.9, len(h_values)))
     fig, axes = plt.subplots(1, 2, figsize=(14, 5))
@@ -12,7 +10,7 @@ def plot_convergence_vs_h(L=6, J=1.0, h_values=None, hidden_dim=32, lr=0.01, n_i
 
     final_errors = []
 
-    for idx, h in enumerate(h_values):
+    for idx, h in enumerate(h_values): #iterating through values, creating each individual convergence line.
         energies, variances, e_exact, _, _, _ = train_1d(L, J, h, hidden_dim, lr, n_iter)
         label = f'h/J={h/J:.1f}'
         color = colors[idx]
@@ -53,17 +51,14 @@ def plot_convergence_vs_h(L=6, J=1.0, h_values=None, hidden_dim=32, lr=0.01, n_i
 
 
 def plot_residuals(L=6, J=1.0, h=1.0, hidden_dim=32, lr=0.01, n_iter=600):
-    """
-    Plot E(t) - E_exact (signed) on a log scale.
-    - Always positive (variational principle guarantees this if working correctly)
-    - Exponential decay on this plot = the network is converging cleanly
-    - Plateaus reveal where training stalls
-    """
+    
+    #plotting residuals between E(t) - E_exact, log-transformed
     energies, variances, e_exact, _, _, _ = train_1d(L, J, h, hidden_dim, lr, n_iter)
 
     residuals = np.array(energies) - e_exact  
 
     w = 20
+    #residual function
     avg_res = np.convolve(residuals, np.ones(w)/w, mode='valid')
     avg_var = np.convolve(variances, np.ones(w)/w, mode='valid')
 
@@ -78,7 +73,8 @@ def plot_residuals(L=6, J=1.0, h=1.0, hidden_dim=32, lr=0.01, n_iter=600):
     ax.set_title('Energy Residual\n(variational bound: always ≥ 0)')
     ax.legend()
     ax.grid(alpha=0.3)
-
+    
+    #fitting multiple residuals to one plot
     half = len(avg_res) // 2
     x_fit = np.arange(half, len(avg_res))
     log_res = np.log(avg_res[half:] + 1e-12)
@@ -103,11 +99,8 @@ def plot_residuals(L=6, J=1.0, h=1.0, hidden_dim=32, lr=0.01, n_iter=600):
     plt.show()
 
 def plot_entanglement_spectrum(L=6, J=1.0, h_values=None):
+    #Entanglement spectrum is computed by splitting the matrix into a left and right half, and then taking the SVD. 
     """
-    Compute the entanglement spectrum from the EXACT ground state.
-    Split the chain into left L/2 and right L/2 spins.
-    Reshape the wavefunction into a (2^(L/2), 2^(L/2)) matrix and SVD it.
-
     Physical interpretation:
     - Few large singular values = simple, low-entanglement state (easy to learn)
     - Many significant singular values = highly entangled (hard to learn)
@@ -123,7 +116,7 @@ def plot_entanglement_spectrum(L=6, J=1.0, h_values=None):
     fig.suptitle(f'Entanglement Spectrum  —  1D TFI  (L={L}, J={J})', fontsize=13, fontweight='bold')
 
     entanglement_entropies = []
-
+    #svd taken here
     for idx, h in enumerate(h_values):
         _, psi_vec = exact_diag(L, J, h)
         psi_matrix = psi_vec.reshape(2**half, 2**half)
@@ -172,10 +165,7 @@ def plot_entanglement_spectrum(L=6, J=1.0, h_values=None):
 def plot_spin_correlations(L=6, J=1.0, h_values=None, hidden_dim=32, lr=0.01, n_iter=600):
     """
     Compute ⟨σ_0 σ_r⟩ for r = 0..L-1 using both the exact and learned wavefunctions.
-    In 1D this is a line plot (correlation vs distance).
-
-    Key insight: long-range correlations (large r) are captured last during training.
-    Near the critical point, correlations decay slowly (power law) — much harder to fit.
+    Comparing the exact and learned to see how well the model's fit understands relationships, similar to entanglement spectrum.
     """
     if h_values is None:
         h_values = [0.5, 1.0, 2.0]
