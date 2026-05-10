@@ -1,14 +1,7 @@
 #The code that ran our first model, pre sampling step
 
 def compute_local_energy_1d(sigma_all, log_psi_all, L, J, h):
-    """
-    E_loc(σ) = diagonal part + off-diagonal part
-
-    Diagonal:     -J Σ_i σ_i σ_{i+1}
-    Off-diagonal: -h Σ_k exp(log Ψ(σ^(k)) - log Ψ(σ))
-
-    σ^(k) = σ with spin k flipped = XOR bit k in the config index.
-    """
+    #Local energy is the diagonal + off-diagonal, which is different part of hamiltonian
     n = sigma_all.shape[0]
 
     neighbors = sigma_all[:, [(i+1) % L for i in range(L)]]
@@ -27,26 +20,23 @@ def compute_local_energy_1d(sigma_all, log_psi_all, L, J, h):
 def vmc_step(wf, sigma_all, L, J, h, optimizer):
     optimizer.zero_grad()
 
-    # (a) Evaluate network on ALL configs
+    # Evaluate network on ALL configs
     log_psi = wf.log_psi(sigma_all)          # (2^L,), has grad
 
-    # (b) Weights: π(σ) = |Ψ(σ)|² / Z
     log_prob = 2.0 * log_psi.detach()
     pi = torch.softmax(log_prob, dim=0)       # (2^L,), sums to 1
 
-    # (c) Local energy for each config
+    # Local energy for each config
     with torch.no_grad():
         e_loc = compute_local_energy_1d(sigma_all, log_psi.detach(), L, J, h)
 
-    # (d) Variational energy and variance
+    # Variational energy and variance
     energy = torch.sum(pi * e_loc).item()
     variance = torch.sum(pi * (e_loc - energy)**2).item()
 
-    # (e) REINFORCE loss → autograd gives VMC gradient
     e_centered = (e_loc - energy).detach()
     loss = 2.0 * torch.sum(pi.detach() * e_centered * log_psi)
 
-    # (f) Backprop and update
     loss.backward()
     torch.nn.utils.clip_grad_norm_(wf.parameters(), max_norm=5.0)
     optimizer.step()
