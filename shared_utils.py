@@ -1,10 +1,7 @@
 #this file holds our base NN pre sampling, and some spin config functions that are used universally.
 
 class WaveFunction(nn.Module):
-    """
-    Input:  σ ∈ {±1}^L   (one spin configuration)
-    Output: log|Ψ(σ)|    (one scalar)
-    """
+    # This function inputs one spin configuration, and outputs the log amplitude of the wavefunction as a scalar.
     def __init__(self, L, hidden_dim=32):
         super().__init__()
         self.net = nn.Sequential(
@@ -13,18 +10,18 @@ class WaveFunction(nn.Module):
             nn.Linear(hidden_dim, hidden_dim),
             nn.Tanh(),
             nn.Linear(hidden_dim, 1),
-        )
+        ) #standard 5-layer network we've seen in research papers
         for p in self.parameters():
             nn.init.normal_(p, std=0.01)
 
-    def log_psi(self, sigma):
-        """sigma: (batch, L) → returns (batch,)"""
+    def log_psi(self, sigma): 
+        #log adjustment helper function
         return self.net(sigma).squeeze(-1)
 
 
 
 def all_configs(L):
-    """Returns (2^L, L) tensor of all spin configs, values ±1."""
+    # Returns (2^L, L) tensor of all spin configs, values ±1.
     configs = []
     for i in range(2**L):
         spins = [2*((i >> k) & 1) - 1 for k in range(L)]
@@ -34,6 +31,7 @@ def all_configs(L):
 
 
 def exact_diag(L, J, h):
+    #computers exact diagonalization for all spin configs
     dim = 2**L
     H = np.zeros((dim, dim))
     for idx in range(dim):
