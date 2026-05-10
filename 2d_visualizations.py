@@ -1,17 +1,6 @@
-def plot_2d_convergence_vs_h(L=3, J=1.0, h_values=None,
-                              alpha=2, n_steps=300, n_samples=300, eta=0.02):
-    """
-    Train a fresh 2D RBM at each h/J value and overlay convergence.
- 
-    Default L=3 (N=9 spins) — small enough for exact diag reference.
-    For L=4 (N=16) exact diag is feasible but slow (~30s CPU).
-    For L≥5 exact diag is disabled and you rely on variance only.
- 
-    Key comparison vs 1D:
-    - Curves are noisier (stochastic SR vs exact enumeration)
-    - Critical point plateau is more pronounced
-    - Variance floor is higher — 2D states are harder to compress
-    """
+def plot_2d_convergence_vs_h(L=3, J=1.0, h_values=None, alpha=2, n_steps=300, n_samples=300, eta=0.02):
+
+    #Similar to the 1D Convergence, train an RBM at each h/J value, overlay convergence. Smaller system size of 3
     if h_values is None:
         h_values = [0.3, 0.5, 1.0, 1.5, 2.5]
  
@@ -73,17 +62,8 @@ def plot_2d_convergence_vs_h(L=3, J=1.0, h_values=None,
  
 def plot_2d_residuals(L=3, J=1.0, h=1.0, alpha=2,
                       n_steps=400, n_samples=300, eta=0.02):
-    """
-    Signed residual E(t)/N - E_exact/N on log scale (requires L≤4).
- 
-    Left : residual vs step — plateau shape reveals loss landscape flatness.
-    Right: residual vs variance scatter — tight diagonal = theory prediction.
- 
-    Compare directly to 1D residual plot:
-    - Plateau should be longer in 2D (harder problem)
-    - Scatter plot more spread (MC noise from sampling rather than exact enum)
-    - Late-stage decay rate should be slower
-    """
+    #Residual E(t) / N - E_exact, left and right side represent loss and prediction.
+                        
     N = L * L
     if N > 16:
         print(f"L={L} → N={N} > 16: exact diag not feasible, skipping residual plot.")
@@ -148,28 +128,14 @@ def plot_2d_residuals(L=3, J=1.0, h=1.0, alpha=2,
     plt.tight_layout()
     plt.show()
  
-def plot_2d_spin_correlations(L=3, J=1.0, h_values=None,
-                               alpha=2, n_steps=300, n_samples=500, eta=0.02):
-    """
-    2D spin-spin correlations ⟨σ₀ σᵣ⟩.
- 
-    Two panels per h/J value:
-      Left  — 2D heatmap: correlation of each lattice site with site (0,0)
-               Exact (if N≤16) and RBM side by side.
-      Right — 1D slice: correlations along the top row (y=0, x=0..L-1)
-               Direct comparison to 1D correlation plots.
- 
-    Key insight for 2D:
-    - Ferromagnetic phase: entire lattice correlated, flat heatmap near +1
-    - Paramagnetic phase: fast decay in both x and y directions
-    - Critical point: slow decay, anisotropic if model hasn't learned 2D geometry
-    """
+def plot_2d_spin_correlations(L=3, J=1.0, h_values=None, alpha=2, n_steps=300, n_samples=500, eta=0.02):
+    # Spin-spin correlations between spins in 2D. This generates both 2D heatmap and 1D correlation plot over spins.
     if h_values is None:
         h_values = [0.5, 1.0, 2.0]
  
     N        = L * L
     has_exact = N <= 16
- 
+   #going through h_values
     for h in h_values:
         print(f"\n  h/J={h/J:.1f} — training 2D RBM...", flush=True)
         _, _, _, rbm = train_2d(L, J, h, alpha, n_steps, n_samples, eta)
@@ -230,7 +196,7 @@ def plot_2d_spin_correlations(L=3, J=1.0, h_values=None,
  
         vmin, vmax = -1.0, 1.0
         col = 0
- 
+       
         if has_exact and corr_exact_2d is not None:
             im = axes[col].imshow(corr_exact_2d, vmin=vmin, vmax=vmax,
                                    cmap='RdBu_r', origin='upper')
@@ -267,7 +233,7 @@ def plot_2d_spin_correlations(L=3, J=1.0, h_values=None,
         plt.tight_layout()
         plt.show()
 
-
+#pipeline we used to actually run the visualizations.
 if __name__ == "__main__":
     L = 3    
     J = 1.0
