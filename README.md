@@ -14,6 +14,8 @@ rbm_gibbs.py: This holds our code for our main sampling step. The restricted-bol
 
 2d_geometry.py: This holds code that helps translate our functions from 1D to 2D. These are relatively light as the sampling step from 1D->2D just involves an increase in the dimensionality of the array modeling the spin system.
 
+pytorch_rbm.py: This holds code for the rbm using MLX, cuda, and pytorch, which is what we used for the 2D visualization. Running 2D visualizations requires this being the most recent RBM.
+
 2d_visualizations.py: This holds our code for generating all visualizations in 2D.
 
 
