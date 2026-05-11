@@ -18,6 +18,7 @@ pytorch_rbm.py: This holds code for the rbm using MLX, cuda, and pytorch, which 
 
 2d_visualizations.py: This holds our code for generating all visualizations in 2D.
 
+Major dependencies are MLX and CuPy(for 2d). For 2d examples, please expect around 100gb VRAM usage for $L\leq 5$, and around 500gb VRAM usage for $L=6$. This usage's main contribute is from the exact diagonalization computed for reference data. 
 
 
 Functions are well labelled and their use-cases are commented by us.
